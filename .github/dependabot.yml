@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "/" # Dockerfile is at repo root
+    schedule:
+      interval: "weekly" # options: daily, weekly, monthly
+    commit-message:
+      prefix: "chore(deps):"
+    ignore:
+      - dependency-name: "node" # ignore base node images
+    reviewers:
+      - "your-github-username" # optional
