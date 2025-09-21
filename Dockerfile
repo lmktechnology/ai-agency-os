@@ -6,7 +6,3 @@ WORKDIR /data
 
 # Expose port
 EXPOSE 5678
-
-# Mount persistent storage
-VOLUME /data
-
