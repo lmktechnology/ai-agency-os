@@ -1,5 +1,5 @@
 # Use official n8n image
-FROM n8nio/n8n:1.111.0
+FROM n8nio/n8n:1.115.3
 
 # Work directory
 WORKDIR /data
