@@ -1,8 +1,21 @@
-# Use official n8n image
-FROM n8nio/n8n:1.111.0
+FROM python:3.12-slim
 
-# Work directory
-WORKDIR /data
+WORKDIR /app
 
-# Expose port
-EXPOSE 5678
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create runtime directories
+RUN mkdir -p memory/sessions memory/flat memory/vector
+
+# Run the bot in polling mode by default
+CMD ["python", "main.py", "--trigger=telegram"]

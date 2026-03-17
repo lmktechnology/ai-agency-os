@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    env_file: .env
+    volumes:
+      - ./memory:/app/memory
+      - ./agents:/app/agents
+      - ./skills:/app/skills
+      - ./tools:/app/tools
+    restart: unless-stopped
+    command: python main.py --trigger=telegram

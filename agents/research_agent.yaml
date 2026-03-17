@@ -1,0 +1,75 @@
+name: research_agent
+description: "Handles research, news lookups, and information gathering tasks"
+
+model: claude-sonnet-4-6
+max_tokens: 8096
+max_react_iterations: 10
+
+system_prompt: |
+  You are a research specialist. Your job is to find accurate, up-to-date information
+  using the tools available to you. Always cite sources when possible.
+  Be concise and well-structured in your responses.
+  Format output for Telegram: use *bold* for key terms, bullet points for lists.
+  Do not use markdown headers (#, ##) as they don't render well in Telegram.
+
+skills:
+  - name: research_methodology
+  - name: reply_formatting
+
+tools:
+  - name: web_search
+    description: "Search the web for current information and news"
+    module: src.tools.builtins.web_search
+    function: web_search
+    sandboxed: true
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          description: "The search query"
+        num_results:
+          type: integer
+          description: "Number of results to return (default: 5)"
+          default: 5
+      required: [query]
+
+  - name: http_request
+    description: "Make an HTTP GET or POST request to a URL to fetch content"
+    module: src.tools.builtins.http_request
+    function: http_request
+    sandboxed: true
+    parameters:
+      type: object
+      properties:
+        url:
+          type: string
+          description: "The URL to request"
+        method:
+          type: string
+          enum: [GET, POST]
+          default: GET
+        headers:
+          type: object
+          description: "Optional HTTP headers"
+        body:
+          type: object
+          description: "Optional request body for POST requests"
+      required: [url]
+
+  - name: get_datetime
+    description: "Get the current date and time"
+    module: src.tools.builtins.datetime_tool
+    function: get_datetime
+    sandboxed: false
+    parameters:
+      type: object
+      properties:
+        timezone:
+          type: string
+          default: UTC
+      required: []
+
+memory:
+  enabled: true
+  flush_interval_seconds: 60

@@ -1,45 +1,30 @@
-# Render Infrastructure Config
 services:
-  - type: web
-    name: ai-agency-os-n8n
+  - type: worker
+    name: ai-agency-os
     env: docker
     plan: starter
     dockerfilePath: ./Dockerfile
     autoDeploy: true
     envVars:
-      - key: N8N_BASIC_AUTH_ACTIVE
-        value: "true"
-      - key: N8N_BASIC_AUTH_USER
+      - key: ANTHROPIC_API_KEY
         sync: false
-      - key: N8N_BASIC_AUTH_PASSWORD
+      - key: TELEGRAM_BOT_TOKEN
         sync: false
-      - key: N8N_HOST
-        value: "ai-agency-os-n8n.onrender.com"
-      - key: WEBHOOK_URL
-        value: "https://ai-agency-os-n8n.onrender.com/"
-      - key: DB_TYPE
-        value: "postgresdb"
-      - key: DB_POSTGRESDB_HOST
-        fromDatabase:
-          name: ai-agency-os-db
-          property: host
-      - key: DB_POSTGRESDB_PORT
-        fromDatabase:
-          name: ai-agency-os-db
-          property: port
-      - key: DB_POSTGRESDB_DATABASE
-        fromDatabase:
-          name: ai-agency-os-db
-          property: database
-      - key: DB_POSTGRESDB_USER
-        fromDatabase:
-          name: ai-agency-os-db
-          property: user
-      - key: DB_POSTGRESDB_PASSWORD
-        fromDatabase:
-          name: ai-agency-os-db
-          property: password
-
-databases:
-  - name: ai-agency-os-db
-    plan: starter
+      - key: TELEGRAM_ALLOWED_CHAT_IDS
+        sync: false
+      - key: TELEGRAM_ADMIN_CHAT_ID
+        sync: false
+      - key: DATA_DIR
+        value: /app/memory
+      - key: AGENTS_DIR
+        value: /app/agents
+      - key: SKILLS_DIR
+        value: /app/skills
+      - key: TOOLS_DIR
+        value: /app/tools
+      - key: LOG_LEVEL
+        value: INFO
+    disk:
+      name: memory
+      mountPath: /app/memory
+      sizeGB: 1

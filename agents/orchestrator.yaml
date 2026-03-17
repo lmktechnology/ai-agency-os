@@ -1,0 +1,21 @@
+name: orchestrator
+default_agent: general_assistant
+parallel_dispatch: false
+
+routing_rules:
+  - pattern: "\\b(research|news|search|look up|find|who is|what is|latest|current events|headlines)\\b"
+    agent: research_agent
+    priority: 10
+
+  - pattern: ".*"
+    agent: general_assistant
+    priority: 0
+
+cron_jobs:
+  # Example: morning briefing on weekdays at 8am UTC
+  # Uncomment and set TELEGRAM_ADMIN_CHAT_ID to enable
+  # - id: morning_briefing
+  #   cron: "0 8 * * 1-5"
+  #   agent: research_agent
+  #   message: "Generate a brief morning update on the most important AI and technology news from the past 24 hours"
+  #   reply_chat_id: "${TELEGRAM_ADMIN_CHAT_ID}"
