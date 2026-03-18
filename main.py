@@ -34,6 +34,7 @@ from src.memory.session import SessionManager
 from src.skills.loader import SkillLoader
 from src.tools.registry import ToolRegistry
 from src.triggers.cron import CronTrigger
+from src.triggers.heartbeat import HeartbeatTrigger
 
 
 def _configure_logging(level: str) -> None:
@@ -101,10 +102,18 @@ async def main(trigger_mode: str) -> None:
     else:
         log.warning("Memory flusher disabled — ANTHROPIC_API_KEY not set")
 
-    # --- Cron trigger ---
+    # --- Cron trigger (time-of-day scheduled jobs) ---
     cron_trigger = CronTrigger(orchestrator)
     cron_trigger.load_from_config(orchestrator_config.cron_jobs)
     await cron_trigger.start()
+
+    # --- Heartbeat trigger (interval-based autonomous loops) ---
+    heartbeat_trigger = HeartbeatTrigger(orchestrator)
+    heartbeat_trigger.load_from_config(orchestrator_config.heartbeats)
+    await heartbeat_trigger.start()
+    if orchestrator_config.heartbeats:
+        enabled = [hb.id for hb in orchestrator_config.heartbeats if hb.enabled]
+        log.info("Autonomous heartbeats active: %s", enabled)
 
     # --- Main trigger ---
     if trigger_mode == "telegram":

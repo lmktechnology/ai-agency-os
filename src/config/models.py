@@ -53,9 +53,36 @@ class CronJobConfig(BaseModel):
     reply_chat_id: str | None = None
 
 
+class HeartbeatConfig(BaseModel):
+    """
+    Interval-based autonomous heartbeat.
+    Fires an agent every `interval_seconds` so it can proactively monitor
+    state and act without any human prompting.
+
+    Fields:
+        id                  — unique identifier for this heartbeat
+        interval_seconds    — how often to fire (min: 10s)
+        agent               — which agent runs the heartbeat task
+        message             — the prompt sent to the agent each tick
+        reply_chat_id       — if set, non-empty agent responses are forwarded here
+        silent_on_noop      — if True, responses starting with "NOOP" are suppressed
+        startup_delay_seconds — delay before the first tick (default 5s)
+        enabled             — set to false to disable without removing the config
+    """
+    id: str
+    interval_seconds: int
+    agent: str
+    message: str
+    reply_chat_id: str | None = None
+    silent_on_noop: bool = True
+    startup_delay_seconds: int = 5
+    enabled: bool = True
+
+
 class OrchestratorConfig(BaseModel):
     name: str = "orchestrator"
     default_agent: str
     routing_rules: list[RoutingRule] = Field(default_factory=list)
     cron_jobs: list[CronJobConfig] = Field(default_factory=list)
+    heartbeats: list[HeartbeatConfig] = Field(default_factory=list)
     parallel_dispatch: bool = False

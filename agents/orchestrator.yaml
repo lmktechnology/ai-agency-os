@@ -11,11 +11,54 @@ routing_rules:
     agent: general_assistant
     priority: 0
 
+# ---------------------------------------------------------------------------
+# CRON JOBS — fire at specific times of day (5-part cron expression, UTC)
+# ---------------------------------------------------------------------------
 cron_jobs:
   # Example: morning briefing on weekdays at 8am UTC
-  # Uncomment and set TELEGRAM_ADMIN_CHAT_ID to enable
+  # Uncomment and set TELEGRAM_ADMIN_CHAT_ID in .env to enable
   # - id: morning_briefing
   #   cron: "0 8 * * 1-5"
   #   agent: research_agent
   #   message: "Generate a brief morning update on the most important AI and technology news from the past 24 hours"
   #   reply_chat_id: "${TELEGRAM_ADMIN_CHAT_ID}"
+
+# ---------------------------------------------------------------------------
+# HEARTBEATS — autonomous interval-based monitoring loops
+#
+# Heartbeats make the system truly proactive: agents run on their own cadence
+# without any human message triggering them.
+#
+# The heartbeat_agent uses "NOOP:" convention — if there's nothing to do it
+# returns "NOOP: ..." which is silently suppressed (no spam to the user).
+# Only meaningful action summaries are forwarded to reply_chat_id.
+#
+# Fields:
+#   id                    — unique name for this heartbeat
+#   interval_seconds      — how often to fire (minimum: 10)
+#   agent                 — agent to run each tick
+#   message               — prompt sent to the agent
+#   reply_chat_id         — Telegram chat to forward non-NOOP responses to
+#   silent_on_noop        — suppress "NOOP:..." responses (default: true)
+#   startup_delay_seconds — wait before first tick so system finishes booting
+#   enabled               — flip to false to pause without deleting
+# ---------------------------------------------------------------------------
+heartbeats:
+  # Example: autonomous monitor that checks every 5 minutes for anything to act on
+  # Uncomment and set TELEGRAM_ADMIN_CHAT_ID in .env to enable
+  # - id: autonomous_monitor
+  #   interval_seconds: 300        # every 5 minutes
+  #   agent: heartbeat_agent
+  #   message: "Heartbeat tick. Review memory for open tasks and pending follow-ups. Take any necessary proactive action. If nothing requires attention, respond with NOOP."
+  #   reply_chat_id: "${TELEGRAM_ADMIN_CHAT_ID}"
+  #   silent_on_noop: true
+  #   startup_delay_seconds: 10
+  #   enabled: true
+
+  # Example: rapid health-check heartbeat every 30 seconds (no forwarding)
+  # - id: health_check
+  #   interval_seconds: 30
+  #   agent: heartbeat_agent
+  #   message: "Quick health check. Is there anything in memory marked urgent? If not, respond NOOP."
+  #   silent_on_noop: true
+  #   enabled: false
