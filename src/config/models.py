@@ -30,6 +30,9 @@ class AgentConfig(BaseModel):
     system_prompt: str = ""
     skills: list[SkillRef] = Field(default_factory=list)
     tools: list[ToolConfig] = Field(default_factory=list)
+    # LLM provider selection — must match a key in the provider registry
+    # Options: "anthropic" | "openai" | "openrouter" | "deepseek" | "ollama"
+    provider: str = "anthropic"
     model: str = "claude-sonnet-4-6"
     max_tokens: int = 8096
     max_react_iterations: int = 10

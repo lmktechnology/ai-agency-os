@@ -1,6 +1,9 @@
 name: general_assistant
 description: "Catch-all conversational agent for general questions and tasks"
 
+# provider selects the LLM backend — must match a key configured in .env
+# Options: anthropic | openai | openrouter | deepseek | ollama
+provider: anthropic
 model: claude-sonnet-4-6
 max_tokens: 4096
 max_react_iterations: 5

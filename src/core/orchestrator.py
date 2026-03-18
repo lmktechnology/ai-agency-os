@@ -2,19 +2,15 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import Any
 
-import anthropic
-
-from src.config.models import OrchestratorConfig, RoutingRule
+from src.config.models import OrchestratorConfig
 from src.core.agent_registry import AgentRegistry
 from src.core.event import AgentResponse, Event
 from src.gateway.base import BaseMessagingGateway
+from src.llm.base import BaseLLMProvider
 from src.memory.session import SessionManager
 from src.skills.loader import SkillLoader
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +22,17 @@ class Orchestrator:
         agent_registry: AgentRegistry,
         skill_loader: SkillLoader,
         session_manager: SessionManager,
-        anthropic_client: anthropic.AsyncAnthropic,
+        provider_registry: dict[str, BaseLLMProvider],
         gateway: BaseMessagingGateway | None = None,
     ) -> None:
         self._config = config
         self._agent_registry = agent_registry
         self._skill_loader = skill_loader
         self._session_manager = session_manager
-        self._client = anthropic_client
+        self._provider_registry = provider_registry
         self._gateway = gateway
 
-        # Pre-compile routing rule patterns sorted by descending priority
+        # Pre-compile routing rules sorted by descending priority
         self._rules: list[tuple[re.Pattern, str]] = [
             (re.compile(rule.pattern, re.IGNORECASE), rule.agent)
             for rule in sorted(config.routing_rules, key=lambda r: r.priority, reverse=True)
@@ -46,9 +42,9 @@ class Orchestrator:
         """Return the agent name that should handle this event."""
         for pattern, agent_name in self._rules:
             if pattern.search(event.message):
-                logger.debug("Routing '%s...' to agent '%s'", event.message[:40], agent_name)
+                logger.debug("Routing '%s...' → agent '%s'", event.message[:40], agent_name)
                 return agent_name
-        logger.debug("No rule matched — using default agent '%s'", self._config.default_agent)
+        logger.debug("No rule matched — default agent '%s'", self._config.default_agent)
         return self._config.default_agent
 
     async def handle_event(self, event: Event) -> AgentResponse:
@@ -60,7 +56,7 @@ class Orchestrator:
                 name=agent_name,
                 skill_loader=self._skill_loader,
                 session_manager=self._session_manager,
-                anthropic_client=self._client,
+                provider_registry=self._provider_registry,
             )
         except KeyError:
             logger.error("Agent '%s' not found; falling back to default", agent_name)
@@ -68,7 +64,7 @@ class Orchestrator:
                 name=self._config.default_agent,
                 skill_loader=self._skill_loader,
                 session_manager=self._session_manager,
-                anthropic_client=self._client,
+                provider_registry=self._provider_registry,
             )
 
         response = await agent.run(event)

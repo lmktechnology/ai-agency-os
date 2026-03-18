@@ -108,7 +108,7 @@ class CronTrigger(BaseTrigger):
                 name=agent_name,
                 skill_loader=self._orchestrator._skill_loader,
                 session_manager=self._orchestrator._session_manager,
-                anthropic_client=self._orchestrator._client,
+                provider_registry=self._orchestrator._provider_registry,
             )
             response = await agent.run(event)
             if response.error:

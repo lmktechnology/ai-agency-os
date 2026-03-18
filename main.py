@@ -5,12 +5,20 @@ Boots the agent OS and starts the selected trigger mode.
 Usage:
   python main.py --trigger=telegram   (default; requires TELEGRAM_BOT_TOKEN)
   python main.py --trigger=cli        (local REPL for testing)
+
+Supported LLM providers (configure via .env):
+  anthropic   — Claude models (ANTHROPIC_API_KEY)
+  openai      — GPT-4o etc. (OPENAI_API_KEY)
+  openrouter  — Multi-model aggregator (OPENROUTER_API_KEY)
+  deepseek    — DeepSeek models (DEEPSEEK_API_KEY)
+  ollama      — Local models via Ollama (OLLAMA_BASE_URL)
 """
 from __future__ import annotations
 
 import argparse
 import asyncio
 import logging
+import os
 import sys
 
 import anthropic
@@ -20,6 +28,7 @@ from src.config.loader import load_orchestrator_config
 from src.config.settings import GlobalSettings
 from src.core.agent_registry import AgentRegistry
 from src.core.orchestrator import Orchestrator
+from src.llm.factory import build_provider_registry
 from src.memory.flusher import MemoryFlusher
 from src.memory.session import SessionManager
 from src.skills.loader import SkillLoader
@@ -49,8 +58,17 @@ async def main(trigger_mode: str) -> None:
     log = structlog.get_logger(__name__)
     log.info("Starting AI Agency OS", trigger=trigger_mode)
 
+    # --- Build provider registry (all configured LLM providers) ---
+    provider_registry = build_provider_registry(
+        anthropic_api_key=settings.anthropic_api_key,
+        openai_api_key=settings.openai_api_key,
+        openrouter_api_key=settings.openrouter_api_key,
+        deepseek_api_key=settings.deepseek_api_key,
+        ollama_base_url=settings.ollama_base_url,
+    )
+    log.info("Active providers: %s", list(provider_registry.keys()))
+
     # --- Core infrastructure ---
-    anthropic_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
     tool_registry = ToolRegistry()
     agent_registry = AgentRegistry(settings.agents_dir, tool_registry)
     agent_registry.load_all()
@@ -59,7 +77,6 @@ async def main(trigger_mode: str) -> None:
     session_manager = SessionManager(settings.data_dir)
 
     # --- Load orchestrator config ---
-    import os
     orchestrator_config_path = os.path.join(settings.agents_dir, "orchestrator.yaml")
     try:
         orchestrator_config = load_orchestrator_config(orchestrator_config_path)
@@ -72,13 +89,17 @@ async def main(trigger_mode: str) -> None:
         agent_registry=agent_registry,
         skill_loader=skill_loader,
         session_manager=session_manager,
-        anthropic_client=anthropic_client,
-        gateway=None,  # gateway is wired up by the trigger
+        provider_registry=provider_registry,
+        gateway=None,  # wired up by the trigger
     )
 
-    # --- Background memory flusher ---
-    flusher = MemoryFlusher(anthropic_client)
-    asyncio.create_task(flusher.start(session_manager))
+    # --- Background memory flusher (uses Anthropic haiku for cheap summarization) ---
+    if settings.anthropic_api_key:
+        anthropic_client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
+        flusher = MemoryFlusher(anthropic_client)
+        asyncio.create_task(flusher.start(session_manager))
+    else:
+        log.warning("Memory flusher disabled — ANTHROPIC_API_KEY not set")
 
     # --- Cron trigger ---
     cron_trigger = CronTrigger(orchestrator)

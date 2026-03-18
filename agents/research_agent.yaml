@@ -1,6 +1,9 @@
 name: research_agent
 description: "Handles research, news lookups, and information gathering tasks"
 
+# Switch to "openrouter" or "openai" to use GPT-4o for research tasks.
+# Example OpenRouter model: "openai/gpt-4o" or "google/gemini-2.0-flash"
+provider: anthropic
 model: claude-sonnet-4-6
 max_tokens: 8096
 max_react_iterations: 10

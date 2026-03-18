@@ -11,10 +11,18 @@ class GlobalSettings(BaseSettings):
         extra="ignore",
     )
 
+    # === LLM Provider API Keys ===
     anthropic_api_key: str = ""
+    openai_api_key: str = ""
+    openrouter_api_key: str = ""
+    deepseek_api_key: str = ""
+    ollama_base_url: str = ""   # e.g. http://localhost:11434/v1
+
+    # === Telegram ===
     telegram_bot_token: str = ""
     telegram_allowed_chat_ids: list[int] = []
 
+    # === Directories ===
     data_dir: str = "./memory"
     agents_dir: str = "./agents"
     skills_dir: str = "./skills"
